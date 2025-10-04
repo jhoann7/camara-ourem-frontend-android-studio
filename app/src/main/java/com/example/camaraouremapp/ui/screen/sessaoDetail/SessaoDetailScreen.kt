@@ -23,7 +23,8 @@ import com.example.camaraouremapp.ui.theme.VermelhoCamara
 
 @Composable
 fun SessaoDetailScreen(
-    onPautaClick: (Long) -> Unit, // Recebe a função de clique da navegação
+    onPautaClickParaVotar: (Long) -> Unit,
+    onPautaClickParaResultado: (Long) -> Unit,
     sessaoDetailViewModel: SessaoDetailViewModel = viewModel()
 ) {
     val pautasState by sessaoDetailViewModel.pautasState.collectAsStateWithLifecycle()
@@ -45,25 +46,46 @@ fun SessaoDetailScreen(
                     Text(text = "Erro: ${state.message}", color = MaterialTheme.colorScheme.error)
                 }
                 is PautasUiState.Success -> {
-                    ListaDePautas(pautas = state.pautas, onPautaClick = onPautaClick)
+                    // 2. Passamos as duas funções de clique para a nossa lista
+                    ListaDePautas(
+                        pautas = state.pautas,
+                        onPautaClickParaVotar = onPautaClickParaVotar,
+                        onPautaClickParaResultado = onPautaClickParaResultado
+                    )
                 }
             }
         }
     }
 }
 
+// 3. A assinatura da lista também foi atualizada
 @Composable
-fun ListaDePautas(pautas: List<Pauta>, onPautaClick: (Long) -> Unit) {
+fun ListaDePautas(
+    pautas: List<Pauta>,
+    onPautaClickParaVotar: (Long) -> Unit,
+    onPautaClickParaResultado: (Long) -> Unit
+) {
     if (pautas.isEmpty()) {
         Text(text = "Nenhuma pauta encontrada para esta sessão.")
     } else {
         LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             items(pautas) { pauta ->
-                PautaItem(pauta = pauta, onClick = { onPautaClick(pauta.id) })
+                PautaItem(
+                    pauta = pauta,
+                    onClick = {
+                        // 4. A lógica de decisão que você tinha na imagem
+                        if (pauta.status == "AGUARDANDO_VOTACAO" || pauta.status == "EM_VOTACAO") {
+                            onPautaClickParaVotar(pauta.id)
+                        } else {
+                            onPautaClickParaResultado(pauta.id)
+                        }
+                    }
+                )
             }
         }
     }
 }
+
 
 @Composable
 fun PautaItem(pauta: Pauta, onClick: () -> Unit) {

@@ -7,3 +7,11 @@ data class Pauta(
     val status: String,
     val sessao: Sessao // Inclui a sessão a que pertence
 )
+
+data class ResultadoVotacao(
+    val pauta: Pauta,
+    val totalSim: Int,
+    val totalNao: Int,
+    val totalAbstencoes: Int,
+    val resultadoFinal: String
+)

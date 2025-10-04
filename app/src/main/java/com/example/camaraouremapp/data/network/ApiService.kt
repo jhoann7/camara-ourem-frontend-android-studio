@@ -15,6 +15,7 @@ import retrofit2.http.Path
 import com.example.camaraouremapp.dto.MeResponse
 import com.example.camaraouremapp.dto.VotoRequest
 import com.example.camaraouremapp.dto.VotoResponse
+import com.example.camaraouremapp.dto.ResultadoVotacao
 
 // URL base do nosso backend. ATENÇÃO: 10.0.2.2 é o endereço especial
 // que o emulador Android usa para se referir ao 'localhost' do seu computador.
@@ -62,5 +63,7 @@ interface ApiService {
 
     @GET("pautas/{pautaId}")
     suspend fun getPautaById(@Path("pautaId") pautaId: Long): Response<Pauta>
+    @GET("votos/pauta/{pautaId}/resultado")
+    suspend fun getResultado(@Path("pautaId") pautaId: Long): Response<ResultadoVotacao>
 }
 

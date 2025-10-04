@@ -18,6 +18,7 @@ import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.example.camaraouremapp.ui.screen.sessaodetail.SessaoDetailScreen
 import com.example.camaraouremapp.ui.screen.votacao.VotacaoScreen
+import com.example.camaraouremapp.ui.screen.resultado.ResultadoScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,15 +58,26 @@ fun AppNavigation() {
             route = "sessaodetail/{sessaoId}",
             arguments = listOf(navArgument("sessaoId") { type = NavType.LongType })
         ) {
-            SessaoDetailScreen(onPautaClick = { pautaId ->
-                navController.navigate("votacao/$pautaId")
-            })
+            SessaoDetailScreen(
+                onPautaClickParaVotar = { pautaId ->
+                    navController.navigate("votacao/$pautaId")
+                },
+                onPautaClickParaResultado = { pautaId ->
+                    navController.navigate("resultado/$pautaId")
+                }
+            )
         }
         composable(
             route = "votacao/{pautaId}",
             arguments = listOf(navArgument("pautaId") { type = NavType.LongType })
         ) {
             VotacaoScreen(onNavigateBack = { navController.popBackStack() })
+        }
+        composable(
+            route = "resultado/{pautaId}",
+            arguments = listOf(navArgument("pautaId") { type = NavType.LongType })
+        ) {
+            ResultadoScreen()
         }
     }
 }
