@@ -23,7 +23,7 @@ class SessaoDetailViewModel(
         fetchPautas()
     }
 
-    private fun fetchPautas() {
+    fun fetchPautas() {
         viewModelScope.launch {
             _pautasState.value = PautasUiState.Loading
             try {

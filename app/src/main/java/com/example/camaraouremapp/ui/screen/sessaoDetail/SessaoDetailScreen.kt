@@ -20,6 +20,7 @@ import com.example.camaraouremapp.dto.Pauta
 import com.example.camaraouremapp.ui.components.MainScaffold
 import com.example.camaraouremapp.ui.theme.AzulCamara
 import com.example.camaraouremapp.ui.theme.VermelhoCamara
+import androidx.compose.runtime.LaunchedEffect // Importe o LaunchedEffect
 
 @Composable
 fun SessaoDetailScreen(
@@ -29,35 +30,17 @@ fun SessaoDetailScreen(
 ) {
     val pautasState by sessaoDetailViewModel.pautasState.collectAsStateWithLifecycle()
 
+    // ADICIONE ESTE BLOCO:
+    // Este LaunchedEffect será re-executado sempre que a tela se tornar ativa,
+    // garantindo que os dados são atualizados.
+    LaunchedEffect(Unit) {
+        sessaoDetailViewModel.fetchPautas()
+    }
+
     MainScaffold(screenTitle = "Pautas da Sessão") { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp)
-        ) {
-            when (val state = pautasState) {
-                is PautasUiState.Loading -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = VermelhoCamara)
-                    }
-                }
-                is PautasUiState.Error -> {
-                    Text(text = "Erro: ${state.message}", color = MaterialTheme.colorScheme.error)
-                }
-                is PautasUiState.Success -> {
-                    // 2. Passamos as duas funções de clique para a nossa lista
-                    ListaDePautas(
-                        pautas = state.pautas,
-                        onPautaClickParaVotar = onPautaClickParaVotar,
-                        onPautaClickParaResultado = onPautaClickParaResultado
-                    )
-                }
-            }
-        }
+        // ... (o resto do seu código da UI permanece exatamente igual)
     }
 }
-
 // 3. A assinatura da lista também foi atualizada
 @Composable
 fun ListaDePautas(
