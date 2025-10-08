@@ -1,5 +1,6 @@
 package com.example.camaraouremapp.ui.screen.sessaodetail
 
+import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -11,7 +12,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import android.util.Log
 
 class SessaoDetailViewModel(
     savedStateHandle: SavedStateHandle
@@ -22,12 +22,11 @@ class SessaoDetailViewModel(
     private val _pautasState = MutableStateFlow<PautasUiState>(PautasUiState.Loading)
     val pautasState = _pautasState.asStateFlow()
 
-    // Novo StateFlow para o tempo do cronómetro
     private val _tempoRestante = MutableStateFlow(0)
     val tempoRestante = _tempoRestante.asStateFlow()
 
     init {
-        fetchPautas()
+        fetchPautas() // Esta chamada já estava aqui, o que é bom
         fetchTempoInicial()
         conectarCronometro()
     }
@@ -73,7 +72,19 @@ class SessaoDetailViewModel(
     }
 
     fun fetchPautas() {
-        // ... (o seu código para buscar pautas continua igual)
+        viewModelScope.launch {
+            _pautasState.value = PautasUiState.Loading
+            try {
+                val response = RetrofitInstance.api.getPautasPorSessao(sessaoId)
+                if (response.isSuccessful && response.body() != null) {
+                    _pautasState.value = PautasUiState.Success(response.body()!!)
+                } else {
+                    _pautasState.value = PautasUiState.Error("Falha ao carregar as pautas")
+                }
+            } catch (e: Exception) {
+                _pautasState.value = PautasUiState.Error(e.message ?: "Erro de ligação")
+            }
+        }
     }
 
     fun mudarStatusPauta(pautaId: Long, novoStatus: String) {

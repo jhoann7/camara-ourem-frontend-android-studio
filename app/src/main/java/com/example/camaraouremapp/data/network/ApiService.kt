@@ -46,25 +46,24 @@ interface ApiService {
     @POST("auth/login")
     suspend fun login(@Body request: LoginRequest): Response<LoginResponse>
 
-    // ADICIONE ESTE NOVO MÉTODO
+    @GET("auth/me")
+    suspend fun getMe(): Response<MeResponse>
+
     @GET("sessoes")
     suspend fun getSessoes(): Response<List<Sessao>>
+
+    @GET("sessoes/{id}")
+    suspend fun getSessaoPorId(@Path("id") id: Long): Response<Sessao>
 
     @GET("pautas/sessao/{sessaoId}")
     suspend fun getPautasPorSessao(@Path("sessaoId") sessaoId: Long): Response<List<Pauta>>
 
-    @GET("auth/me")
-    suspend fun getMe(): Response<MeResponse>
-
-    @POST("votos/pauta/{pautaId}/usuario/{usuarioId}")
-    suspend fun registarVoto(
-        @Path("pautaId") pautaId: Long,
-        @Path("usuarioId") usuarioId: Long,
-        @Body request: VotoRequest
-    ): Response<VotoResponse>
-
     @GET("pautas/{pautaId}")
     suspend fun getPautaById(@Path("pautaId") pautaId: Long): Response<Pauta>
+
+    @POST("votos/pauta/{pautaId}/usuario/{usuarioId}")
+    suspend fun registarVoto(@Path("pautaId") pautaId: Long, @Path("usuarioId") usuarioId: Long, @Body request: VotoRequest): Response<VotoResponse>
+
     @GET("votos/pauta/{pautaId}/resultado")
     suspend fun getResultado(@Path("pautaId") pautaId: Long): Response<ResultadoVotacao>
 
@@ -72,13 +71,7 @@ interface ApiService {
     suspend fun getFrequencia(@Path("sessaoId") sessaoId: Long): Response<FrequenciaResponse>
 
     @PATCH("pautas/{pautaId}/status")
-    suspend fun atualizarStatusPauta(
-        @Path("pautaId") pautaId: Long,
-        @Body statusUpdate: Map<String, String>
-    ): Response<Pauta>
-
-    @GET("sessoes/{id}")
-    suspend fun getSessaoPorId(@Path("id") id: Long): Response<Sessao>
+    suspend fun mudarStatusPauta(@Path("pautaId") pautaId: Long, @Body statusUpdate: Map<String, String>): Response<Pauta>
 
     @POST("sessoes/{id}/iniciar-cronometro")
     suspend fun iniciarCronometro(@Path("id") id: Long): Response<Sessao>
@@ -88,12 +81,6 @@ interface ApiService {
 
     @POST("sessoes/{id}/resetar-cronometro")
     suspend fun resetarCronometro(@Path("id") id: Long): Response<Sessao>
-
-    @PATCH("pautas/{pautaId}/status")
-    suspend fun mudarStatusPauta(
-        @Path("pautaId") pautaId: Long,
-        @Body statusUpdate: Map<String, String>
-    ): Response<Pauta>
 }
 
 
