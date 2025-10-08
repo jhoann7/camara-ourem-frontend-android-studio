@@ -3,9 +3,7 @@ package com.example.camaraouremapp.ui.screen.votacao
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -38,14 +36,12 @@ fun VotacaoScreen(
             }
         }
 
-        // AQUI ESTÁ A CORREÇÃO DO LAYOUT
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
-            // Removemos o Arrangement.SpaceBetween daqui
         ) {
             // Usa um 'when' para mostrar o estado do carregamento da pauta
             when (val state = pautaState) {
@@ -73,7 +69,7 @@ fun VotacaoScreen(
                 }
             }
 
-            // Este espaçador com peso "empurra" os botões para baixo
+            // Espaçador com peso para empurrar os botões para baixo
             Spacer(modifier = Modifier.weight(1f))
 
             // Só mostra os botões se o voto não tiver sido registado com sucesso

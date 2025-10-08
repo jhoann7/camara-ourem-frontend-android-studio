@@ -7,6 +7,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -31,14 +32,25 @@ fun ResultadoScreen(resultadoViewModel: ResultadoViewModel = viewModel()) {
                 is ResultadoUiState.Error -> Text(text = "Erro: ${state.message}", color = MaterialTheme.colorScheme.error)
                 is ResultadoUiState.Success -> {
                     val resultado = state.resultado
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(text = resultado.pauta.descricao, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-                        Spacer(modifier = Modifier.height(32.dp))
-                        Text(text = "Resultado Final: ${resultado.resultadoFinal}", fontSize = 20.sp, color = VermelhoCamara)
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(text = "Votos SIM: ${resultado.totalSim}")
-                        Text(text = "Votos NÃO: ${resultado.totalNao}")
-                        Text(text = "Abstenções: ${resultado.totalAbstencoes}")
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Text(
+                            text = resultado.pauta.descricao,
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
+                        )
+                        Text(
+                            text = "Resultado Final: ${resultado.resultadoFinal}",
+                            fontSize = 20.sp,
+                            color = VermelhoCamara,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(text = "Votos SIM: ${resultado.totalSim}", fontSize = 18.sp)
+                        Text(text = "Votos NÃO: ${resultado.totalNao}", fontSize = 18.sp)
+                        Text(text = "Abstenções: ${resultado.totalAbstencoes}", fontSize = 18.sp)
                     }
                 }
             }

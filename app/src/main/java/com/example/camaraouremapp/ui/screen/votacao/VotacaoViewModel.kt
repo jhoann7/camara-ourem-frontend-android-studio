@@ -17,6 +17,7 @@ class VotacaoViewModel(
 
     val pautaId: Long = checkNotNull(savedStateHandle["pautaId"])
 
+    // Novo estado para guardar os detalhes da pauta
     private val _pautaState = MutableStateFlow<PautaUiState>(PautaUiState.Loading)
     val pautaState = _pautaState.asStateFlow()
 
@@ -24,6 +25,7 @@ class VotacaoViewModel(
     val votacaoState = _votacaoState.asStateFlow()
 
     init {
+        // Vai buscar os detalhes da pauta assim que o ViewModel é criado
         fetchPautaDetails()
     }
 

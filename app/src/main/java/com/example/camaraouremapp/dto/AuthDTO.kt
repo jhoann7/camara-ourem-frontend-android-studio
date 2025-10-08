@@ -19,3 +19,8 @@ data class MeResponse(
     val login: String,
     val funcao: String
 )
+
+data class FrequenciaResponse(
+    val presentes: List<MeResponse>,
+    val ausentes: List<MeResponse>
+)

@@ -12,14 +12,16 @@ import com.example.camaraouremapp.dto.Sessao // Importe a nossa nova classe
 import retrofit2.http.GET
 import com.example.camaraouremapp.dto.Pauta // Importe a nossa nova classe
 import retrofit2.http.Path
+import retrofit2.http.PATCH
 import com.example.camaraouremapp.dto.MeResponse
 import com.example.camaraouremapp.dto.VotoRequest
 import com.example.camaraouremapp.dto.VotoResponse
 import com.example.camaraouremapp.dto.ResultadoVotacao
+import com.example.camaraouremapp.dto.FrequenciaResponse
 
 // URL base do nosso backend. ATENÇÃO: 10.0.2.2 é o endereço especial
 // que o emulador Android usa para se referir ao 'localhost' do seu computador.
-private const val BASE_URL = "http://192.168.1.119:8080/"
+private const val BASE_URL = "http://camara-ourem-backend-env.eba-gmycdjz7.us-east-2.elasticbeanstalk.com/"
 
 // Objeto que constrói e fornece a nossa instância do Retrofit
 object RetrofitInstance {
@@ -65,5 +67,33 @@ interface ApiService {
     suspend fun getPautaById(@Path("pautaId") pautaId: Long): Response<Pauta>
     @GET("votos/pauta/{pautaId}/resultado")
     suspend fun getResultado(@Path("pautaId") pautaId: Long): Response<ResultadoVotacao>
+
+    @GET("votos/sessao/{sessaoId}/frequencia")
+    suspend fun getFrequencia(@Path("sessaoId") sessaoId: Long): Response<FrequenciaResponse>
+
+    @PATCH("pautas/{pautaId}/status")
+    suspend fun atualizarStatusPauta(
+        @Path("pautaId") pautaId: Long,
+        @Body statusUpdate: Map<String, String>
+    ): Response<Pauta>
+
+    @GET("sessoes/{id}")
+    suspend fun getSessaoPorId(@Path("id") id: Long): Response<Sessao>
+
+    @POST("sessoes/{id}/iniciar-cronometro")
+    suspend fun iniciarCronometro(@Path("id") id: Long): Response<Sessao>
+
+    @POST("sessoes/{id}/pausar-cronometro")
+    suspend fun pausarCronometro(@Path("id") id: Long, @Body body: Map<String, Int>): Response<Sessao>
+
+    @POST("sessoes/{id}/resetar-cronometro")
+    suspend fun resetarCronometro(@Path("id") id: Long): Response<Sessao>
+
+    @PATCH("pautas/{pautaId}/status")
+    suspend fun mudarStatusPauta(
+        @Path("pautaId") pautaId: Long,
+        @Body statusUpdate: Map<String, String>
+    ): Response<Pauta>
 }
+
 

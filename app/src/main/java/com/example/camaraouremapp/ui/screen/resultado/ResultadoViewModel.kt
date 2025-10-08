@@ -9,15 +9,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-// (Necessário criar este DTO no ficheiro PautaDTO.kt ou num novo ficheiro)
-// data class ResultadoVotacao(
-//     val pauta: Pauta,
-//     val totalSim: Int,
-//     val totalNao: Int,
-//     val totalAbstencoes: Int,
-//     val resultadoFinal: String
-// )
-
 class ResultadoViewModel(savedStateHandle: SavedStateHandle) : ViewModel() {
     private val pautaId: Long = checkNotNull(savedStateHandle["pautaId"])
 
