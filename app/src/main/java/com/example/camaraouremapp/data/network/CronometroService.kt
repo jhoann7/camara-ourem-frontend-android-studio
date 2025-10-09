@@ -15,7 +15,7 @@ object CronometroService {
     val tempoRestante = _tempoRestante.asStateFlow()
 
     // ATENÇÃO: Use a URL base do seu backend, mas troque http:// por ws://
-    private const val WEBSOCKET_URL = "ws://camara-ourem-backend-env.eba-gmycdjz7.us-east-2.elasticbeanstalk.com/ws/websocket"
+    private const val WEBSOCKET_URL = "ws://camara-ourem-backend-env.eba-gmycdjz7.us-east-2.elasticbeanstalk.com/ws"
 
     fun connect(sessaoId: Long) {
         if (stompClient?.isConnected == true) {

@@ -54,7 +54,12 @@ class SessaoDetailViewModel(
     // As funções de controlo do cronómetro
     fun iniciarCronometro() {
         viewModelScope.launch {
-            RetrofitInstance.api.iniciarCronometro(sessaoId)
+            try {
+                Log.d("SessaoDetailVM", "Enviando pedido para iniciar cronómetro...")
+                RetrofitInstance.api.iniciarCronometro(sessaoId)
+            } catch (e: Exception) {
+                Log.e("SessaoDetailVM", "Erro ao iniciar cronómetro", e)
+            }
         }
     }
 
@@ -67,7 +72,12 @@ class SessaoDetailViewModel(
 
     fun resetarCronometro() {
         viewModelScope.launch {
-            RetrofitInstance.api.resetarCronometro(sessaoId)
+            try {
+                Log.d("SessaoDetailVM", "Enviando pedido para resetar cronómetro...")
+                RetrofitInstance.api.resetarCronometro(sessaoId)
+            } catch (e: Exception) {
+                Log.e("SessaoDetailVM", "Erro ao resetar cronómetro", e)
+            }
         }
     }
 
