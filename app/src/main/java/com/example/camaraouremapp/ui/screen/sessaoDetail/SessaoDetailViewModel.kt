@@ -13,6 +13,12 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 
+// Classe para guardar os dados da solicitação de aparte
+data class SolicitacaoAparte(
+    val solicitanteId: Long,
+    val solicitanteNome: String
+)
+
 class SessaoDetailViewModel(
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
@@ -25,14 +31,31 @@ class SessaoDetailViewModel(
     private val _tempoRestante = MutableStateFlow(0)
     val tempoRestante = _tempoRestante.asStateFlow()
 
+    private val _tipoCronometro = MutableStateFlow("PRINCIPAL")
+    val tipoCronometro = _tipoCronometro.asStateFlow()
+
+    private val _solicitacaoAparte = MutableStateFlow<SolicitacaoAparte?>(null)
+    val solicitacaoAparte = _solicitacaoAparte.asStateFlow()
+
     init {
-        fetchPautas() // Esta chamada já estava aqui, o que é bom
+        fetchPautas()
         fetchTempoInicial()
-        conectarCronometro()
+        conectarServicosWebSocket()
     }
 
-    private fun conectarCronometro() {
-        CronometroService.connect(sessaoId)
+    // AJUSTADO para usar a nova função connect
+    private fun conectarServicosWebSocket() {
+        CronometroService.connect(
+            sessaoId = sessaoId,
+            onTipoChange = { novoTipo ->
+                _tipoCronometro.value = novoTipo
+            },
+            onSolicitacao = { solicitacao ->
+                _solicitacaoAparte.value = solicitacao
+            }
+        )
+
+        // A subscrição ao tempo restante continua igual
         CronometroService.tempoRestante
             .onEach { tempo -> _tempoRestante.value = tempo }
             .launchIn(viewModelScope)
@@ -46,12 +69,11 @@ class SessaoDetailViewModel(
                     _tempoRestante.value = response.body()!!.tempoRestanteOrador
                 }
             } catch (e: Exception) {
-                // Lidar com o erro se necessário
+                Log.e("SessaoDetailVM", "Erro ao buscar tempo inicial", e)
             }
         }
     }
 
-    // As funções de controlo do cronómetro
     fun iniciarCronometro() {
         viewModelScope.launch {
             try {
@@ -65,8 +87,12 @@ class SessaoDetailViewModel(
 
     fun pausarCronometro() {
         viewModelScope.launch {
-            val tempoAtual = _tempoRestante.value
-            RetrofitInstance.api.pausarCronometro(sessaoId, mapOf("tempoRestante" to tempoAtual))
+            try {
+                val tempoAtual = _tempoRestante.value
+                RetrofitInstance.api.pausarCronometro(sessaoId, mapOf("tempoRestante" to tempoAtual))
+            } catch (e: Exception) {
+                Log.e("SessaoDetailVM", "Erro ao pausar cronómetro", e)
+            }
         }
     }
 
@@ -79,6 +105,44 @@ class SessaoDetailViewModel(
                 Log.e("SessaoDetailVM", "Erro ao resetar cronómetro", e)
             }
         }
+    }
+
+    fun iniciarAparte() {
+        viewModelScope.launch {
+            try {
+                _solicitacaoAparte.value = null
+                Log.d("SessaoDetailVM", "Enviando pedido para iniciar aparte...")
+                RetrofitInstance.api.iniciarAparte(sessaoId)
+            } catch (e: Exception) {
+                Log.e("SessaoDetailVM", "Erro ao iniciar aparte", e)
+            }
+        }
+    }
+
+    fun pararAparte() {
+        viewModelScope.launch {
+            try {
+                Log.d("SessaoDetailVM", "Enviando pedido para parar aparte...")
+                RetrofitInstance.api.pararAparte(sessaoId)
+            } catch (e: Exception) {
+                Log.e("SessaoDetailVM", "Erro ao parar aparte", e)
+            }
+        }
+    }
+
+    fun solicitarAparte() {
+        viewModelScope.launch {
+            try {
+                Log.d("SessaoDetailVM", "Enviando pedido para solicitar aparte...")
+                RetrofitInstance.api.solicitarAparte(sessaoId)
+            } catch (e: Exception) {
+                Log.e("SessaoDetailVM", "Erro ao solicitar aparte", e)
+            }
+        }
+    }
+
+    fun negarAparte() {
+        _solicitacaoAparte.value = null
     }
 
     fun fetchPautas() {
@@ -103,7 +167,6 @@ class SessaoDetailViewModel(
                 val requestBody = mapOf("status" to novoStatus)
                 val response = RetrofitInstance.api.mudarStatusPauta(pautaId, requestBody)
                 if (response.isSuccessful) {
-                    // Se a atualização funcionou, busca a lista de pautas novamente para atualizar a tela
                     fetchPautas()
                 } else {
                     Log.e("SessaoDetailVM", "Erro ao mudar status: ${response.errorBody()?.string()}")
@@ -114,14 +177,11 @@ class SessaoDetailViewModel(
         }
     }
 
-    // Garante que a ligação é terminada quando o ViewModel é destruído
     override fun onCleared() {
         super.onCleared()
         CronometroService.disconnect()
     }
 }
-
-// ... (a sua classe selada PautasUiState continua igual)
 
 sealed class PautasUiState {
     object Loading : PautasUiState()

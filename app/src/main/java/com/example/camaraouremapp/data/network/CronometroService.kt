@@ -1,23 +1,29 @@
 package com.example.camaraouremapp.data.network
 
 import android.util.Log
-import io.reactivex.disposables.Disposable
+import com.example.camaraouremapp.ui.screen.sessaodetail.SolicitacaoAparte
+import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import org.json.JSONObject
 import ua.naiksoftware.stomp.Stomp
 import ua.naiksoftware.stomp.StompClient
 
 object CronometroService {
     private var stompClient: StompClient? = null
-    private var topicSubscription: Disposable? = null
+    private val compositeDisposable = CompositeDisposable()
 
     private val _tempoRestante = MutableStateFlow(0)
     val tempoRestante = _tempoRestante.asStateFlow()
 
-    // ATENÇÃO: Use a URL base do seu backend, mas troque http:// por ws://
     private const val WEBSOCKET_URL = "ws://camara-ourem-backend-env.eba-gmycdjz7.us-east-2.elasticbeanstalk.com/ws"
 
-    fun connect(sessaoId: Long) {
+    // Função ÚNICA de conexão
+    fun connect(
+        sessaoId: Long,
+        onTipoChange: (String) -> Unit,
+        onSolicitacao: (SolicitacaoAparte) -> Unit
+    ) {
         if (stompClient?.isConnected == true) {
             return // Já está ligado
         }
@@ -25,29 +31,48 @@ object CronometroService {
         stompClient = Stomp.over(Stomp.ConnectionProvider.OKHTTP, WEBSOCKET_URL)
         stompClient?.connect()
 
-        topicSubscription = stompClient?.topic("/topic/cronometro/$sessaoId")
+        // 1. Subscrição ao tópico do CRONÔMETRO
+        val cronometroSubscription = stompClient?.topic("/topic/cronometro/$sessaoId")
             ?.subscribe({ stompMessage ->
                 try {
-                    // O Spring envia um JSON como {"tempoRestante":599}
-                    // O código abaixo extrai o número
-                    val tempo = stompMessage.payload
-                        .substringAfter(":")
-                        .replace("}", "")
-                        .trim()
-                        .toInt()
+                    val json = JSONObject(stompMessage.payload)
+                    val tipo = json.getString("tipo")
+                    val tempo = json.getInt("tempo")
+
                     _tempoRestante.value = tempo
+                    onTipoChange(tipo)
+
                 } catch (e: Exception) {
-                    Log.e("CronometroService", "Erro ao processar mensagem", e)
+                    Log.e("CronometroService", "Erro ao processar mensagem do cronómetro", e)
                 }
             }, { throwable ->
-                Log.e("CronometroService", "Erro na subscrição", throwable)
+                Log.e("CronometroService", "Erro na subscrição do cronómetro", throwable)
             })
+        compositeDisposable.add(cronometroSubscription!!)
+
+        // 2. Subscrição ao tópico de SOLICITAÇÕES
+        val solicitacaoSubscription = stompClient?.topic("/topic/sessoes/$sessaoId/solicitacoes")
+            ?.subscribe({ stompMessage ->
+                try {
+                    val json = JSONObject(stompMessage.payload)
+                    val solicitacao = SolicitacaoAparte(
+                        solicitanteId = json.getLong("solicitanteId"),
+                        solicitanteNome = json.getString("solicitanteNome")
+                    )
+                    onSolicitacao(solicitacao) // Envia o objeto da solicitação para o ViewModel
+                } catch (e: Exception) {
+                    Log.e("CronometroService", "Erro ao processar solicitação de aparte", e)
+                }
+            }, { throwable ->
+                Log.e("CronometroService", "Erro na subscrição de solicitações", throwable)
+            })
+        compositeDisposable.add(solicitacaoSubscription!!)
     }
 
     fun disconnect() {
-        topicSubscription?.dispose()
+        compositeDisposable.clear() // Limpa todas as subscrições
         stompClient?.disconnect()
         stompClient = null
-        _tempoRestante.value = 0 // Reseta o tempo ao desligar
+        _tempoRestante.value = 0
     }
 }

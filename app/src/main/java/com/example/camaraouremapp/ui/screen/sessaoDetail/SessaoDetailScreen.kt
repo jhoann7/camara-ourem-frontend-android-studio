@@ -1,5 +1,6 @@
 package com.example.camaraouremapp.ui.screen.sessaodetail
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -25,8 +26,10 @@ import com.example.camaraouremapp.data.network.UserManager
 import com.example.camaraouremapp.dto.Pauta
 import com.example.camaraouremapp.ui.components.MainScaffold
 import com.example.camaraouremapp.ui.theme.AzulCamara
+import com.example.camaraouremapp.ui.theme.CinzaAbster
+import com.example.camaraouremapp.ui.theme.VerdeConfirmar
 import com.example.camaraouremapp.ui.theme.VermelhoCamara
-import androidx.compose.runtime.LaunchedEffect // <-- Verifique se este import foi adicionado
+
 @Composable
 fun SessaoDetailScreen(
     onPautaClickParaVotar: (Long) -> Unit,
@@ -36,6 +39,9 @@ fun SessaoDetailScreen(
 ) {
     val pautasState by sessaoDetailViewModel.pautasState.collectAsStateWithLifecycle()
     val tempoRestante by sessaoDetailViewModel.tempoRestante.collectAsStateWithLifecycle()
+    val tipoCronometro by sessaoDetailViewModel.tipoCronometro.collectAsStateWithLifecycle()
+    val solicitacao by sessaoDetailViewModel.solicitacaoAparte.collectAsStateWithLifecycle()
+    val usuarioLogado = UserManager.currentUser
 
     LaunchedEffect(Unit) {
         sessaoDetailViewModel.fetchPautas()
@@ -48,18 +54,43 @@ fun SessaoDetailScreen(
                 .padding(paddingValues)
                 .padding(16.dp)
         ) {
-            CronometroDisplay(tempoRestante = tempoRestante)
+            CronometroDisplay(
+                tempoRestante = tempoRestante,
+                tipoCronometro = tipoCronometro
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            if (UserManager.currentUser?.funcao == "PRESIDENTE" || UserManager.currentUser?.funcao == "ADMINISTRADOR") {
+            if (usuarioLogado?.funcao == "PRESIDENTE" || usuarioLogado?.funcao == "ADMINISTRADOR") {
+                // Notificação para o Presidente (só aparece quando há uma solicitação)
+                AnimatedVisibility(visible = solicitacao != null) {
+                    SolicitacaoAparteCard(
+                        solicitanteNome = solicitacao?.solicitanteNome ?: "",
+                        onConceder = { sessaoDetailViewModel.iniciarAparte() },
+                        onNegar = { sessaoDetailViewModel.negarAparte() }
+                    )
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Controles do Presidente (agora se adaptam ao contexto)
                 ControlesPresidente(
                     onPlay = { sessaoDetailViewModel.iniciarCronometro() },
                     onPause = { sessaoDetailViewModel.pausarCronometro() },
-                    onReset = { sessaoDetailViewModel.resetarCronometro() }
+                    onReset = { sessaoDetailViewModel.resetarCronometro() },
+                    onPararAparte = { sessaoDetailViewModel.pararAparte() },
+                    tipoCronometro = tipoCronometro
                 )
-                Spacer(modifier = Modifier.height(16.dp))
+            } else {
+                // Botão para os Vereadores
+                Button(
+                    onClick = { sessaoDetailViewModel.solicitarAparte() },
+                    modifier = Modifier.fillMaxWidth().height(50.dp)
+                ) {
+                    Text("SOLICITAR APARTE", fontSize = 18.sp)
+                }
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             Button(
                 onClick = { onVerFrequenciaClick(sessaoDetailViewModel.sessaoId) },
@@ -92,47 +123,125 @@ fun SessaoDetailScreen(
     }
 }
 
+// Card de Notificação para o Presidente (continua igual)
 @Composable
-fun CronometroDisplay(tempoRestante: Int) {
+fun SolicitacaoAparteCard(
+    solicitanteNome: String,
+    onConceder: () -> Unit,
+    onNegar: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = "Solicitação de Aparte",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Text("O vereador $solicitanteNome solicitou um aparte.")
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                Button(onClick = onConceder, colors = ButtonDefaults.buttonColors(containerColor = VerdeConfirmar)) {
+                    Text("Conceder")
+                }
+                Button(onClick = onNegar, colors = ButtonDefaults.buttonColors(containerColor = VermelhoCamara)) {
+                    Text("Negar")
+                }
+            }
+        }
+    }
+}
+
+// Display do cronômetro (continua igual)
+@Composable
+fun CronometroDisplay(tempoRestante: Int, tipoCronometro: String) {
     val minutos = tempoRestante / 60
     val segundos = tempoRestante % 60
     val tempoFormatado = String.format("%02d:%02d", minutos, segundos)
+    val corFundo = if (tipoCronometro == "APARTE") CinzaAbster else AzulCamara
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = AzulCamara)
+        colors = CardDefaults.cardColors(containerColor = corFundo)
     ) {
-        Text(
-            text = tempoFormatado,
-            fontSize = 48.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color.White,
-            modifier = Modifier
-                .padding(vertical = 24.dp)
-                .align(Alignment.CenterHorizontally)
-        )
+        Column(
+            modifier = Modifier.padding(vertical = 24.dp).fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            if (tipoCronometro == "APARTE") {
+                Text(
+                    text = "APARTE",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+            }
+            Text(
+                text = tempoFormatado,
+                fontSize = 48.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+        }
     }
 }
 
+
+// ALTERAÇÃO PRINCIPAL AQUI
 @Composable
-fun ControlesPresidente(onPlay: () -> Unit, onPause: () -> Unit, onReset: () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(onClick = onPlay) {
-            Icon(Icons.Default.PlayArrow, contentDescription = "Iniciar", modifier = Modifier.size(48.dp))
+fun ControlesPresidente(
+    onPlay: () -> Unit,
+    onPause: () -> Unit,
+    onReset: () -> Unit,
+    onPararAparte: () -> Unit,
+    tipoCronometro: String
+) {
+    // A visibilidade dos controles agora depende do tipo de cronômetro
+    AnimatedVisibility(visible = tipoCronometro == "PRINCIPAL") {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text("Tempo do Orador", fontWeight = FontWeight.Bold)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = onPlay) {
+                    Icon(Icons.Default.PlayArrow, contentDescription = "Iniciar", modifier = Modifier.size(48.dp))
+                }
+                IconButton(onClick = onPause) {
+                    Icon(Icons.Default.Pause, contentDescription = "Pausar", modifier = Modifier.size(48.dp))
+                }
+                IconButton(onClick = onReset) {
+                    Icon(Icons.Default.Refresh, contentDescription = "Resetar", modifier = Modifier.size(48.dp))
+                }
+            }
         }
-        IconButton(onClick = onPause) {
-            Icon(Icons.Default.Pause, contentDescription = "Pausar", modifier = Modifier.size(48.dp))
-        }
-        IconButton(onClick = onReset) {
-            Icon(Icons.Default.Refresh, contentDescription = "Resetar", modifier = Modifier.size(48.dp))
+    }
+
+    AnimatedVisibility(visible = tipoCronometro == "APARTE") {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text("Controle de Aparte", fontWeight = FontWeight.Bold)
+            Button(onClick = onPararAparte) {
+                Text("Retomar Tempo do Orador")
+            }
         }
     }
 }
 
+
+// O resto do arquivo (ListaDePautas, PautaItem) continua igual...
 @Composable
 fun ListaDePautas(
     pautas: List<Pauta>,

@@ -81,6 +81,14 @@ interface ApiService {
 
     @POST("sessoes/{id}/resetar-cronometro")
     suspend fun resetarCronometro(@Path("id") id: Long): Response<Sessao>
+
+    // NOVOS ENDPOINTS
+    @POST("sessoes/{id}/iniciar-aparte")
+    suspend fun iniciarAparte(@Path("id") id: Long): Response<Unit>
+
+    @POST("sessoes/{id}/parar-aparte")
+    suspend fun pararAparte(@Path("id") id: Long): Response<Unit>
+
+    @POST("sessoes/{id}/solicitar-aparte")
+    suspend fun solicitarAparte(@Path("id") id: Long): Response<Unit>
 }
-
-
