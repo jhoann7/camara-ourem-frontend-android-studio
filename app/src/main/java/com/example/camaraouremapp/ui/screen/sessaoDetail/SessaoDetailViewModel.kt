@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 
-// Classe para guardar os dados da solicitação de aparte
 data class SolicitacaoAparte(
     val solicitanteId: Long,
     val solicitanteNome: String
@@ -43,7 +42,6 @@ class SessaoDetailViewModel(
         conectarServicosWebSocket()
     }
 
-    // AJUSTADO para usar a nova função connect
     private fun conectarServicosWebSocket() {
         CronometroService.connect(
             sessaoId = sessaoId,
@@ -55,7 +53,6 @@ class SessaoDetailViewModel(
             }
         )
 
-        // A subscrição ao tempo restante continua igual
         CronometroService.tempoRestante
             .onEach { tempo -> _tempoRestante.value = tempo }
             .launchIn(viewModelScope)
@@ -141,8 +138,19 @@ class SessaoDetailViewModel(
         }
     }
 
+    // FUNÇÃO MODIFICADA
     fun negarAparte() {
-        _solicitacaoAparte.value = null
+        viewModelScope.launch {
+            try {
+                // Limpa a notificação localmente
+                _solicitacaoAparte.value = null
+                // Envia o comando para o servidor retomar o cronómetro principal
+                Log.d("SessaoDetailVM", "Enviando pedido para negar aparte e retomar cronómetro...")
+                RetrofitInstance.api.negarAparte(sessaoId)
+            } catch (e: Exception) {
+                Log.e("SessaoDetailVM", "Erro ao negar aparte", e)
+            }
+        }
     }
 
     fun fetchPautas() {

@@ -1,6 +1,6 @@
 package com.example.camaraouremapp.data.network
 
-import com.example.camaraouremapp.dto.LoginRequest // Usaremos o DTO que já conhecemos
+import com.example.camaraouremapp.dto.LoginRequest
 import com.example.camaraouremapp.dto.LoginResponse
 import retrofit2.Response
 import retrofit2.Retrofit
@@ -8,9 +8,9 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Body
 import retrofit2.http.POST
 import okhttp3.OkHttpClient
-import com.example.camaraouremapp.dto.Sessao // Importe a nossa nova classe
+import com.example.camaraouremapp.dto.Sessao
 import retrofit2.http.GET
-import com.example.camaraouremapp.dto.Pauta // Importe a nossa nova classe
+import com.example.camaraouremapp.dto.Pauta
 import retrofit2.http.Path
 import retrofit2.http.PATCH
 import com.example.camaraouremapp.dto.MeResponse
@@ -19,13 +19,9 @@ import com.example.camaraouremapp.dto.VotoResponse
 import com.example.camaraouremapp.dto.ResultadoVotacao
 import com.example.camaraouremapp.dto.FrequenciaResponse
 
-// URL base do nosso backend. ATENÇÃO: 10.0.2.2 é o endereço especial
-// que o emulador Android usa para se referir ao 'localhost' do seu computador.
 private const val BASE_URL = "http://camara-ourem-backend-env.eba-gmycdjz7.us-east-2.elasticbeanstalk.com/"
 
-// Objeto que constrói e fornece a nossa instância do Retrofit
 object RetrofitInstance {
-    // Cria um cliente HTTP que inclui o nosso intercetor de autenticação
     private val client = OkHttpClient.Builder()
         .addInterceptor(AuthInterceptor())
         .build()
@@ -33,14 +29,12 @@ object RetrofitInstance {
     val api: ApiService by lazy {
         Retrofit.Builder()
             .baseUrl(BASE_URL)
-            .client(client) // Usa o nosso cliente personalizado
+            .client(client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(ApiService::class.java)
     }
 }
-
-// Interface que define os nossos endpoints
 
 interface ApiService {
     @POST("auth/login")
@@ -82,7 +76,6 @@ interface ApiService {
     @POST("sessoes/{id}/resetar-cronometro")
     suspend fun resetarCronometro(@Path("id") id: Long): Response<Sessao>
 
-    // NOVOS ENDPOINTS
     @POST("sessoes/{id}/iniciar-aparte")
     suspend fun iniciarAparte(@Path("id") id: Long): Response<Unit>
 
@@ -91,4 +84,8 @@ interface ApiService {
 
     @POST("sessoes/{id}/solicitar-aparte")
     suspend fun solicitarAparte(@Path("id") id: Long): Response<Unit>
+
+    // NOVO ENDPOINT
+    @POST("sessoes/{id}/negar-aparte")
+    suspend fun negarAparte(@Path("id") id: Long): Response<Unit>
 }
